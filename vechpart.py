@@ -48,8 +48,8 @@ def update_vehicle_parts(vehicle_id, parts):
     for vehicle in data["vehicles"]:
         if vehicle["id"] == vehicle_id:
             vehicle["parts"] = parts
-            save_data(data)
             break
+    save_data(data)
 
 # Function to delete a vehicle
 def delete_vehicle(vehicle_id):
@@ -103,6 +103,8 @@ def show_add_vehicle_screen():
             else:
                 add_vehicle(name, details)
                 st.success(f"Vehicle '{name}' added successfully!")
+                # Clear the form inputs by resetting the session state
+                st.session_state["add_vehicle_form"] = {}
                 st.experimental_rerun()
 
 def show_vehicle_details(vehicle):
@@ -160,6 +162,8 @@ def show_vehicle_details(vehicle):
                     parts_df = parts_df.append(new_part, ignore_index=True)
                     update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                     st.success(f"Part '{part_name}' added successfully!")
+                    # Clear the form inputs by resetting the session state
+                    st.session_state["add_part_form"] = {}
                     st.experimental_rerun()
 
     st.markdown("---")
@@ -176,8 +180,20 @@ def show_vehicle_details(vehicle):
                 # Form to edit part
                 with st.form(f"edit_part_form_{index}"):
                     new_description = st.text_input("Description", value=row['description'])
-                    new_quantity = st.number_input("Quantity", min_value=1, step=1, value=row['quantity'], key=f"quantity_{index}")
-                    new_unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=row['unit_cost'], key=f"unit_cost_{index}")
+                    new_quantity = st.number_input(
+                        "Quantity", 
+                        min_value=1, 
+                        step=1, 
+                        value=row['quantity'], 
+                        key=f"quantity_{index}"
+                    )
+                    new_unit_cost = st.number_input(
+                        "Unit Cost ($)", 
+                        min_value=0.0, 
+                        step=0.1, 
+                        value=row['unit_cost'], 
+                        key=f"unit_cost_{index}"
+                    )
                     update_part = st.form_submit_button("Update Part")
 
                     if update_part:
@@ -186,6 +202,8 @@ def show_vehicle_details(vehicle):
                         parts_df.at[index, 'unit_cost'] = new_unit_cost
                         update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                         st.success(f"Part '{row['part_name']}' updated successfully!")
+                        # Clear the form inputs by resetting the session state
+                        st.session_state[f"edit_part_form_{index}"] = {}
                         st.experimental_rerun()
 
                 # Button to delete part
@@ -199,11 +217,11 @@ def show_vehicle_details(vehicle):
     # Optionally, provide a button to delete the vehicle
     st.markdown("### Delete Vehicle")
     if st.button("Delete Vehicle", key="delete_vehicle"):
-        confirm = st.warning("Are you sure you want to delete this vehicle?", icon="⚠️")
-        if st.button("Yes, Delete", key="confirm_delete"):
+        confirm = st.checkbox("Are you sure you want to delete this vehicle?")
+        if confirm:
             delete_vehicle(vehicle["id"])
             st.success("Vehicle deleted successfully!")
-            st.experimental_rerun()
+            # No need to rerun explicitly; Streamlit will rerun automatically after interaction
 
 if __name__ == "__main__":
     main()
