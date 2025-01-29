@@ -67,6 +67,15 @@ def delete_vehicle(vehicle_id):
     data["vehicles"] = [v for v in data["vehicles"] if v["id"] != vehicle_id]
     save_data(data)
 
+# Function to delete a part from a vehicle
+def delete_part(vehicle_id, part_name):
+    data = load_data()
+    for vehicle in data["vehicles"]:
+        if vehicle["id"] == vehicle_id:
+            vehicle["parts"] = [p for p in vehicle["parts"] if p["part_name"] != part_name]
+            break
+    save_data(data)
+
 # Streamlit App
 def main():
     st.set_page_config(page_title="Vehicle Cost Manager", layout="wide")
@@ -81,11 +90,11 @@ def main():
     elif app_mode == "Add Vehicle":
         add_vehicle_form()
     elif app_mode == "Edit Vehicle":
-        edit_vehicle()
+        edit_vehicle_form()
     elif app_mode == "Add Part":
-        add_part()
+        add_part_form()
     elif app_mode == "Edit Part":
-        edit_part()
+        edit_part_form()
 
 def view_vehicles():
     data = load_data()
@@ -123,9 +132,9 @@ def add_vehicle_form():
             else:
                 add_vehicle(name, details)
                 st.success(f"Vehicle '{name}' added successfully!")
-                st.experimental_rerun()
+                # After form submission, Streamlit naturally reruns the script
 
-def edit_vehicle():
+def edit_vehicle_form():
     data = load_data()
     vehicles = data["vehicles"]
 
@@ -151,9 +160,9 @@ def edit_vehicle():
                     else:
                         update_vehicle_details(vehicle["id"], new_name, new_details)
                         st.success(f"Vehicle '{new_name}' updated successfully!")
-                        st.experimental_rerun()
+                        # After form submission, Streamlit naturally reruns the script
 
-def add_part():
+def add_part_form():
     data = load_data()
     vehicles = data["vehicles"]
 
@@ -183,6 +192,7 @@ def add_part():
                         if part_name in [part["part_name"] for part in vehicle["parts"]]:
                             st.error(f"Part '{part_name}' already exists in '{vehicle['name']}'. Please use the Edit Part section to update it.")
                         else:
+                            # Add new part
                             new_part = {
                                 "part_name": part_name,
                                 "description": description,
@@ -190,11 +200,11 @@ def add_part():
                                 "unit_cost": unit_cost
                             }
                             vehicle["parts"].append(new_part)
-                            update_vehicle_parts(vehicle["id"], vehicle["parts"])
+                            update_vehicle_parts(vehicle['id'], vehicle["parts"])
                             st.success(f"Part '{part_name}' added to '{vehicle['name']}' successfully!")
-                            st.experimental_rerun()
+                            # After form submission, Streamlit naturally reruns the script
 
-def edit_part():
+def edit_part_form():
     data = load_data()
     vehicles = data["vehicles"]
 
@@ -205,7 +215,7 @@ def edit_part():
         return
 
     vehicle_names = [vehicle["name"] for vehicle in vehicles]
-    selected_vehicle_name = st.selectbox("Select a vehicle to edit a part", ["-- Select --"] + vehicle_names)
+    selected_vehicle_name = st.selectbox("Select a vehicle whose part you want to edit", ["-- Select --"] + vehicle_names)
 
     if selected_vehicle_name != "-- Select --":
         vehicle = next((v for v in vehicles if v["name"] == selected_vehicle_name), None)
@@ -223,8 +233,20 @@ def edit_part():
                 if part:
                     with st.form("edit_part_form"):
                         new_description = st.text_input("Description", value=part["description"])
-                        new_quantity = st.number_input("Quantity", min_value=1, step=1, value=part["quantity"])
-                        new_unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=part["unit_cost"])
+                        new_quantity = st.number_input(
+                            "Quantity", 
+                            min_value=1, 
+                            step=1, 
+                            value=part["quantity"], 
+                            key=f"quantity_{part['part_name']}"
+                        )
+                        new_unit_cost = st.number_input(
+                            "Unit Cost ($)", 
+                            min_value=0.0, 
+                            step=0.1, 
+                            value=part["unit_cost"], 
+                            key=f"unit_cost_{part['part_name']}"
+                        )
                         submitted = st.form_submit_button("Update Part")
                         if submitted:
                             if new_description.strip() == "":
@@ -236,22 +258,30 @@ def edit_part():
                                 part["unit_cost"] = new_unit_cost
                                 update_vehicle_parts(vehicle["id"], parts)
                                 st.success(f"Part '{selected_part_name}' updated successfully!")
-                                st.experimental_rerun()
+                                # After form submission, Streamlit naturally reruns the script
 
-def delete_vehicle_confirmation(vehicle_id):
-    confirm = st.checkbox("Are you sure you want to delete this vehicle?", key=f"delete_confirm_{vehicle_id}")
+                    # Button to delete part
+                    delete_key = f"delete_part_{selected_part_name}"
+                    if st.button(f"Delete Part: {selected_part_name}", key=delete_key):
+                        delete_part(vehicle["id"], selected_part_name)
+                        st.success(f"Part '{selected_part_name}' deleted successfully!")
+                        # After button click, Streamlit naturally reruns the script
+
+def delete_vehicle_confirmation(vehicle_id, vehicle_name):
+    st.header("Delete Vehicle")
+    st.warning(f"Are you sure you want to delete the vehicle '{vehicle_name}'?", icon="⚠️")
+    confirm = st.checkbox("Confirm Deletion", key=f"confirm_delete_{vehicle_id}")
     if confirm:
-        if st.button("Confirm Delete", key=f"confirm_delete_{vehicle_id}"):
+        if st.button("Delete Vehicle", key=f"final_delete_{vehicle_id}"):
             delete_vehicle(vehicle_id)
-            st.success("Vehicle deleted successfully!")
-            st.experimental_rerun()
+            st.success(f"Vehicle '{vehicle_name}' deleted successfully!")
+            # After deletion, Streamlit naturally reruns the script
 
-def delete_part_confirmation(vehicle, part_name, index):
-    if st.button(f"Delete Part: {part_name}", key=f"delete_part_{index}"):
-        vehicle["parts"] = [part for part in vehicle["parts"] if part["part_name"] != part_name]
-        update_vehicle_parts(vehicle["id"], vehicle["parts"])
+def delete_part_confirmation(vehicle, part_name):
+    if st.button(f"Delete Part: {part_name}"):
+        delete_part(vehicle["id"], part_name)
         st.success(f"Part '{part_name}' deleted successfully!")
-        st.experimental_rerun()
+        # After deletion, Streamlit naturally reruns the script
 
 if __name__ == "__main__":
     main()
