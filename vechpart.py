@@ -103,9 +103,7 @@ def show_add_vehicle_screen():
             else:
                 add_vehicle(name, details)
                 st.success(f"Vehicle '{name}' added successfully!")
-                # Clear the form inputs by resetting the session state
-                st.session_state["add_vehicle_form"] = {}
-                st.experimental_rerun()
+                # After form submission, Streamlit naturally reruns the script
 
 def show_vehicle_details(vehicle):
     st.subheader(f"Details for: {vehicle['name']}")
@@ -162,9 +160,7 @@ def show_vehicle_details(vehicle):
                     parts_df = parts_df.append(new_part, ignore_index=True)
                     update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                     st.success(f"Part '{part_name}' added successfully!")
-                    # Clear the form inputs by resetting the session state
-                    st.session_state["add_part_form"] = {}
-                    st.experimental_rerun()
+                    # After form submission, Streamlit naturally reruns the script
 
     st.markdown("---")
     st.markdown("### Edit or Delete Existing Parts")
@@ -202,16 +198,15 @@ def show_vehicle_details(vehicle):
                         parts_df.at[index, 'unit_cost'] = new_unit_cost
                         update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                         st.success(f"Part '{row['part_name']}' updated successfully!")
-                        # Clear the form inputs by resetting the session state
-                        st.session_state[f"edit_part_form_{index}"] = {}
-                        st.experimental_rerun()
+                        # After form submission, Streamlit naturally reruns the script
 
                 # Button to delete part
-                if st.button(f"Delete Part: {row['part_name']}", key=f"delete_part_{index}"):
+                delete_key = f"delete_part_{index}"
+                if st.button(f"Delete Part: {row['part_name']}", key=delete_key):
                     parts_df = parts_df.drop(index).reset_index(drop=True)
                     update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                     st.success(f"Part '{row['part_name']}' deleted successfully!")
-                    st.experimental_rerun()
+                    # After button click, Streamlit naturally reruns the script
 
     st.markdown("---")
     # Optionally, provide a button to delete the vehicle
@@ -221,7 +216,7 @@ def show_vehicle_details(vehicle):
         if confirm:
             delete_vehicle(vehicle["id"])
             st.success("Vehicle deleted successfully!")
-            # No need to rerun explicitly; Streamlit will rerun automatically after interaction
+            # After interaction, Streamlit naturally reruns the script
 
 if __name__ == "__main__":
     main()
