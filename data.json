@@ -1,1 +1,43 @@
+{
+  "vehicles": [
+    {
+      "id": "1a2b3c4d-5e6f-7g8h-9i10-j11k12l13m14",
+      "name": "Toyota Camry - ABC123",
+      "details": "2020 Toyota Camry in for engine and transmission repair.",
+      "parts": [
+        {
+          "part_name": "Engine Oil",
+          "description": "5W-30 synthetic engine oil",
+          "quantity": 5,
+          "unit_cost": 25.50
+        },
+        {
+          "part_name": "Transmission Filter",
+          "description": "OEM transmission filter for Toyota Camry",
+          "quantity": 1,
+          "unit_cost": 45.00
+        }
+      ]
+    },
+    {
+      "id": "2b3c4d5e-6f7g-8h9i-10j11-k12l13m14n15",
+      "name": "Honda Civic - XYZ789",
+      "details": "2018 Honda Civic undergoing brake system overhaul.",
+      "parts": [
+        {
+          "part_name": "Brake Pads",
+          "description": "Front brake pads set",
+          "quantity": 1,
+          "unit_cost": 75.00
+        },
+        {
+          "part_name": "Brake Fluid",
+          "description": "DOT 3 brake fluid",
+          "quantity": 2,
+          "unit_cost": 10.00
+        }
+      ]
+    }
+  ]
+}
 
