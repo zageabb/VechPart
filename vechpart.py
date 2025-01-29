@@ -132,32 +132,23 @@ def show_vehicle_details(vehicle):
         st.info("No parts added yet.")
 
     st.markdown("---")
-    st.markdown("### Add/Edit Parts")
+    st.markdown("### Add New Part")
 
-    # Initialize session state for parts
-    if "current_parts" not in st.session_state:
-        st.session_state["current_parts"] = parts_df.copy()
-
-    # Part input fields
-    with st.form("parts_form"):
+    # Form to add a new part
+    with st.form("add_part_form"):
         part_name = st.text_input("Part Name")
         description = st.text_input("Description")
         quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
         unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=0.0)
-        add_part = st.form_submit_button("Add/Update Part")
+        add_part = st.form_submit_button("Add Part")
 
         if add_part:
             if part_name.strip() == "":
                 st.error("Part name cannot be empty.")
             else:
                 # Check if part already exists
-                existing = parts_df[parts_df['part_name'] == part_name]
-                if not existing.empty:
-                    # Update existing part
-                    parts_df.loc[parts_df['part_name'] == part_name, 'description'] = description
-                    parts_df.loc[parts_df['part_name'] == part_name, 'quantity'] = quantity
-                    parts_df.loc[parts_df['part_name'] == part_name, 'unit_cost'] = unit_cost
-                    st.success(f"Part '{part_name}' updated successfully!")
+                if part_name in parts_df['part_name'].values:
+                    st.error(f"Part '{part_name}' already exists. Please use the edit functionality to update it.")
                 else:
                     # Add new part
                     new_part = {
@@ -167,29 +158,44 @@ def show_vehicle_details(vehicle):
                         "unit_cost": unit_cost
                     }
                     parts_df = parts_df.append(new_part, ignore_index=True)
+                    update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
                     st.success(f"Part '{part_name}' added successfully!")
+                    st.experimental_rerun()
 
-                # Update session state
-                st.session_state["current_parts"] = parts_df.copy()
-                st.experimental_rerun()
+    st.markdown("---")
+    st.markdown("### Edit or Delete Existing Parts")
 
-    # Allow editing of parts
-    st.markdown("### Edit Existing Parts")
-    edited_parts = st.experimental_data_editor(
-        st.session_state["current_parts"],
-        num_rows="dynamic",
-        use_container_width=True,
-        key="edited_parts"
-    )
+    if not parts_df.empty:
+        for index, row in parts_df.iterrows():
+            with st.expander(f"{row['part_name']}"):
+                st.write(f"**Description:** {row['description']}")
+                st.write(f"**Quantity:** {row['quantity']}")
+                st.write(f"**Unit Cost:** ${row['unit_cost']:.2f}")
+                st.write(f"**Total Cost:** ${row['quantity'] * row['unit_cost']:.2f}")
 
-    if st.button("Save Changes to Parts"):
-        # Update vehicle parts
-        new_parts = edited_parts.to_dict(orient="records")
-        update_vehicle_parts(vehicle["id"], new_parts)
-        st.success("Parts updated successfully!")
-        st.experimental_rerun()
+                with st.form(f"edit_part_form_{index}"):
+                    new_description = st.text_input("Description", value=row['description'])
+                    new_quantity = st.number_input("Quantity", min_value=1, step=1, value=row['quantity'])
+                    new_unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=row['unit_cost'])
+                    update_part = st.form_submit_button("Update Part")
 
+                    if update_part:
+                        parts_df.at[index, 'description'] = new_description
+                        parts_df.at[index, 'quantity'] = new_quantity
+                        parts_df.at[index, 'unit_cost'] = new_unit_cost
+                        update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
+                        st.success(f"Part '{row['part_name']}' updated successfully!")
+                        st.experimental_rerun()
+
+                if st.button(f"Delete Part: {row['part_name']}", key=f"delete_part_{index}"):
+                    parts_df = parts_df.drop(index).reset_index(drop=True)
+                    update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
+                    st.success(f"Part '{row['part_name']}' deleted successfully!")
+                    st.experimental_rerun()
+
+    st.markdown("---")
     # Optionally, provide a button to delete the vehicle
+    st.markdown("### Delete Vehicle")
     if st.button("Delete Vehicle", key="delete_vehicle"):
         confirm = st.warning("Are you sure you want to delete this vehicle?", icon="⚠️")
         if st.button("Yes, Delete", key="confirm_delete"):
