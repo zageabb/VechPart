@@ -173,10 +173,11 @@ def show_vehicle_details(vehicle):
                 st.write(f"**Unit Cost:** ${row['unit_cost']:.2f}")
                 st.write(f"**Total Cost:** ${row['quantity'] * row['unit_cost']:.2f}")
 
+                # Form to edit part
                 with st.form(f"edit_part_form_{index}"):
                     new_description = st.text_input("Description", value=row['description'])
-                    new_quantity = st.number_input("Quantity", min_value=1, step=1, value=row['quantity'])
-                    new_unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=row['unit_cost'])
+                    new_quantity = st.number_input("Quantity", min_value=1, step=1, value=row['quantity'], key=f"quantity_{index}")
+                    new_unit_cost = st.number_input("Unit Cost ($)", min_value=0.0, step=0.1, value=row['unit_cost'], key=f"unit_cost_{index}")
                     update_part = st.form_submit_button("Update Part")
 
                     if update_part:
@@ -187,6 +188,7 @@ def show_vehicle_details(vehicle):
                         st.success(f"Part '{row['part_name']}' updated successfully!")
                         st.experimental_rerun()
 
+                # Button to delete part
                 if st.button(f"Delete Part: {row['part_name']}", key=f"delete_part_{index}"):
                     parts_df = parts_df.drop(index).reset_index(drop=True)
                     update_vehicle_parts(vehicle['id'], parts_df.to_dict(orient='records'))
